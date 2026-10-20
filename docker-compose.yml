@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # --- Shared Infrastructure ---
+  redis:
+    image: redis:alpine
+    container_name: naseej-cache
+    ports:
+      - "6379:6379"
+
+  # --- Auth Service ---
+  auth-db:
+    image: postgres:15-alpine
+    container_name: auth-db
+    environment:
+      POSTGRES_USER: naseej_user
+      POSTGRES_PASSWORD: naseej_password
+      POSTGRES_DB: auth_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U naseej_user -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build: ./backend/auth-service
+    container_name: auth-service
+    ports:
+      - "3001:3000"
+    environment:
+      DATABASE_URL: postgres://naseej_user:naseej_password@auth-db:5432/auth_db
+      JWT_SECRET: super_secret_tunisia_key
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+  # --- Emergency Service (PostGIS) ---
+  emergency-db:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: emergency-db
+    environment:
+      POSTGRES_USER: emergency_user
+      POSTGRES_PASSWORD: emergency_password
+      POSTGRES_DB: emergency_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U emergency_user -d emergency_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  emergency-service:
+    build: ./backend/emergency-service
+    container_name: emergency-service
+    ports:
+      - "3002:3000"
+    environment:
+      DATABASE_URL: postgres://emergency_user:emergency_password@emergency-db:5432/emergency_db
+    depends_on:
+      emergency-db:
+        condition: service_healthy
+
+  # --- Transport Service ---
+  transport-service:
+    build: ./backend/transport-service
+    container_name: transport-service
+    ports:
+      - "3003:3000"
+    environment:
+      REDIS_HOST: redis
+      DATABASE_URL: postgres://transport_user:transport_password@transport-db:5432/transport_db
+    depends_on:
+      - redis
