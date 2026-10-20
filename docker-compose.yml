@@ -7,8 +7,9 @@ services:
     container_name: naseej-cache
     ports:
       - "6379:6379"
+    restart: unless-stopped
 
-  # --- Auth Service ---
+  # --- Auth Service Database ---
   auth-db:
     image: postgres:15-alpine
     container_name: auth-db
@@ -16,12 +17,16 @@ services:
       POSTGRES_USER: naseej_user
       POSTGRES_PASSWORD: naseej_password
       POSTGRES_DB: auth_db
+    ports:
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U naseej_user -d auth_db"]
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
+  # --- Auth Service ---
   auth-service:
     build: ./backend/auth-service
     container_name: auth-service
@@ -30,11 +35,13 @@ services:
     environment:
       DATABASE_URL: postgres://naseej_user:naseej_password@auth-db:5432/auth_db
       JWT_SECRET: super_secret_tunisia_key
+      PORT: 3000
     depends_on:
       auth-db:
         condition: service_healthy
+    restart: unless-stopped
 
-  # --- Emergency Service (PostGIS) ---
+  # --- Emergency Service Database (PostGIS) ---
   emergency-db:
     image: postgis/postgis:15-3.3-alpine
     container_name: emergency-db
@@ -42,12 +49,16 @@ services:
       POSTGRES_USER: emergency_user
       POSTGRES_PASSWORD: emergency_password
       POSTGRES_DB: emergency_db
+    ports:
+      - "5434:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U emergency_user -d emergency_db"]
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
+  # --- Emergency Service ---
   emergency-service:
     build: ./backend/emergency-service
     container_name: emergency-service
@@ -55,9 +66,11 @@ services:
       - "3002:3000"
     environment:
       DATABASE_URL: postgres://emergency_user:emergency_password@emergency-db:5432/emergency_db
+      PORT: 3000
     depends_on:
       emergency-db:
         condition: service_healthy
+    restart: unless-stopped
 
   # --- Transport Service ---
   transport-service:
@@ -67,6 +80,19 @@ services:
       - "3003:3000"
     environment:
       REDIS_HOST: redis
-      DATABASE_URL: postgres://transport_user:transport_password@transport-db:5432/transport_db
+      PORT: 3000
     depends_on:
       - redis
+    restart: unless-stopped
+
+  # --- Frontend (Web UI) ---
+  frontend:
+    build: ./frontend
+    container_name: naseej-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - auth-service
+      - emergency-service
+      - transport-service
+    restart: unless-stopped

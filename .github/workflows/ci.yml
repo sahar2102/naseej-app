@@ -1,0 +1,54 @@
+name: CI Build & Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build Services & Test Docker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Build Auth Service
+        run: |
+          cd backend/auth-service
+          npm install
+          npm run build
+
+      - name: Build Emergency Service
+        run: |
+          cd backend/emergency-service
+          npm install
+          npm run build
+
+      - name: Build Transport Service
+        run: |
+          cd backend/transport-service
+          npm install
+          npm run build
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Validate Docker Compose Configuration
+        run: |
+          docker compose config
+
+      - name: Build All Docker Images
+        run: |
+          docker compose build

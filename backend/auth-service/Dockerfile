@@ -14,15 +14,13 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Only copy production dependencies and the built dist folder
 COPY --from=build /app/package*.json ./
-RUN npm install --only=production
+RUN npm install --omit=dev
 
 COPY --from=build /app/dist ./dist
 
 EXPOSE 3000
 
-# Non-root user for security
 USER node
 
 CMD ["node", "dist/main"]

@@ -1,0 +1,41 @@
+{
+  "name": "Naseej Project Codespace",
+  "image": "mcr.microsoft.com/devcontainers/universal:2-linux",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "enableDockerEngine": true
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    }
+  },
+  "forwardPorts": [5173, 3001, 3002, 3003, 6379, 5433, 5434],
+  "portsAttributes": {
+    "5173": {
+      "label": "Frontend (Web UI)",
+      "onAutoForward": "openBrowser"
+    },
+    "3001": {
+      "label": "Auth Service",
+      "onAutoForward": "silent"
+    },
+    "3002": {
+      "label": "Emergency Service",
+      "onAutoForward": "silent"
+    },
+    "3003": {
+      "label": "Transport Service",
+      "onAutoForward": "silent"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+  "postCreateCommand": "echo 'Codespace ready! Run docker compose up --build to launch all services.'"
+}
