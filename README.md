@@ -11,7 +11,7 @@ A modern microservices-based emergency response and public transit tracking plat
 > 💡 **لماذا هذا الخيار؟** إذا كنت تستخدم **EVE-NG** أو برامج المحاكاة الافتراضية على حاسوبك، فإن تشغيل Docker محلياً قد يعطّل خاصية VT-x/AMD-V (بسبب Hyper-V / WSL2). يتيح لك GitHub Codespaces تشغيل بيئة Docker كاملة في سحابة GitHub مجاناً وبدون التأثير على حاسوبك إطلاقاً.
 
 1. افتح صفحة المستودع على GitHub:  
-   👉 [https://github.com/sahar2102/naseej-project](https://github.com/sahar2102/naseej-project)
+   👉 [https://github.com/sahar2102/naseej-app](https://github.com/sahar2102/naseej-app)
 2. اضغط على الزر الأخضر **`Code`** ثم اختر تبويب **`Codespaces`**.
 3. اضغط على **`Create codespace on main`**.
 4. عند فتح الـ Codespace في المتصفح، افتح الطرفية (Terminal) وشغّل:
