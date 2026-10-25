@@ -1,15 +1,6 @@
 {
   "name": "Naseej App Codespace",
   "image": "mcr.microsoft.com/devcontainers/universal:2-linux",
-  "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "version": "latest",
-      "enableDockerEngine": true
-    },
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "18"
-    }
-  },
   "forwardPorts": [5173, 3001, 3002, 3003, 6379, 5433, 5434],
   "portsAttributes": {
     "5173": {
