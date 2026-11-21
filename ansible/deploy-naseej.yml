@@ -85,6 +85,16 @@
             JWT_SECRET: "{{ lookup('ansible.builtin.password', '/dev/null chars=hexdigits length=96') }}"
       when: secret.resources | length == 0
 
+    - name: Creer la ConfigMap emergency-init (script d'initialisation PostGIS)
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata: { name: emergency-init, namespace: "{{ namespace }}" }
+          data:
+            01-postgis.sql: "{{ lookup('ansible.builtin.file', repo_dir ~ '/infrastructure/postgres/init-postgis.sql') }}"
+
     - name: Appliquer le manifeste naseej-k8s.yaml
       kubernetes.core.k8s:
         state: present
