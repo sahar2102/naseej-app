@@ -111,12 +111,24 @@
         wait_timeout: 300
       loop: "{{ deployments }}"
 
+    - name: Attendre que les bases de donnees (StatefulSets) soient pretes
+      kubernetes.core.k8s_info:
+        kind: StatefulSet
+        namespace: "{{ namespace }}"
+        name: "{{ item }}"
+        wait: true
+        wait_timeout: 300
+      loop: [auth-db, emergency-db]
+
     # ---------------------------------------------------------------- 4. verification
-    - name: Recuperer les pods du namespace
+    - name: Recuperer les pods du namespace (jusqu'a ce qu'ils soient tous Running)
       kubernetes.core.k8s_info:
         kind: Pod
         namespace: "{{ namespace }}"
       register: pods
+      until: pods.resources | rejectattr('status.phase', 'equalto', 'Running') | list | length == 0
+      retries: 30
+      delay: 10
 
     - name: Verifier que tous les pods sont Running
       ansible.builtin.assert:
