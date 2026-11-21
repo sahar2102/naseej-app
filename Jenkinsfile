@@ -1,6 +1,7 @@
 // Pipeline Jenkins du projet Naseej
 // Declenche automatiquement par GitHub (verification du depot toutes les 2 minutes),
-// il recupere le code, construit une image Docker par microservice puis deploie sur Minikube.
+// il recupere le code, construit une image Docker par microservice, deploie sur Minikube
+// puis verifie que les services deployes repondent (tests de sante).
 pipeline {
     agent any
 
@@ -63,14 +64,28 @@ pipeline {
                 '''
                 // 2. mise a jour progressive (rolling update) des Deployments
                 sh '''
-                    ${KUBECTL} set image deployment/auth-service auth-service=naseej-auth:${TAG}
-                    ${KUBECTL} set image deployment/emergency-service emergency-service=naseej-emergency:${TAG}
-                    ${KUBECTL} set image deployment/api-gateway api-gateway=naseej-gateway:${TAG}
-                    ${KUBECTL} set image deployment/web-frontend web-frontend=naseej-frontend:${TAG}
+                    # k : relance kubectl jusqu'a 6 fois si l'API Kubernetes ne repond pas encore
+                    k() { for i in 1 2 3 4 5 6; do ${KUBECTL} "$@" && return 0; echo "API Kubernetes indisponible, nouvel essai dans 10 s"; sleep 10; done; return 1; }
+                    k get deployments
+                    k set image deployment/auth-service auth-service=naseej-auth:${TAG}
+                    k set image deployment/emergency-service emergency-service=naseej-emergency:${TAG}
+                    k set image deployment/api-gateway api-gateway=naseej-gateway:${TAG}
+                    k set image deployment/web-frontend web-frontend=naseej-frontend:${TAG}
                     for d in auth-service emergency-service api-gateway web-frontend; do
-                      ${KUBECTL} rollout status deployment/${d} --timeout=240s
+                      k rollout status deployment/${d} --timeout=240s
                     done
-                    ${KUBECTL} get pods -o wide
+                    k get pods -o wide
+                '''
+            }
+        }
+        stage('Tests de sante') {
+            steps {
+                // la chaine frontend -> api-gateway -> backends doit repondre "ready"
+                sh '''
+                    k() { for i in 1 2 3 4 5 6; do ${KUBECTL} "$@" && return 0; sleep 10; done; return 1; }
+                    k exec deploy/web-frontend -- wget -qO- http://api-gateway:8080/ready; echo
+                    k exec deploy/api-gateway -- wget -qO- http://auth-service:3000/ready; echo
+                    k exec deploy/api-gateway -- wget -qO- http://emergency-service:3000/ready; echo
                 '''
             }
         }
